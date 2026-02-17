@@ -333,3 +333,44 @@ RUN
 TESTS
 
 - See docs/tests.md and cmd/pykeymouse-sim.
+
+SERVER GUIDE (Linux)
+
+1. Build:
+   go build -o /usr/local/bin/pykeymouse-server ./cmd/pykeymouse-server
+2. Create a service user:
+   sudo useradd --system --no-create-home --shell /usr/sbin/nologin pykeymouse
+3. Enable uinput access:
+   sudo cp linux/udev/99-pykeymouse-uinput.rules /etc/udev/rules.d/
+   sudo udevadm control --reload-rules
+   sudo udevadm trigger
+4. Generate TLS certs:
+   go run ./cmd/pykeymouse-cert -mode self -out-dir /etc/pykeymouse -hosts "192.168.1.10,pykeymouse"
+5. Generate bcrypt hash:
+   go run ./cmd/pykeymouse-hash
+6. Configure:
+   cp configs/server.json /etc/pykeymouse/server.json
+   Edit /etc/pykeymouse/server.json:
+   - tls.cert_path = "/etc/pykeymouse/server.crt"
+   - tls.key_path  = "/etc/pykeymouse/server.key"
+   - auth.password_hash_bcrypt = "<bcrypt hash>"
+7. Install systemd unit:
+   sudo cp linux/systemd/pykeymouse-server.service /etc/systemd/system/
+   sudo systemctl daemon-reload
+   sudo systemctl enable --now pykeymouse-server
+
+CLIENT GUIDE (Windows)
+
+1. Build:
+   go build -o pykeymouse-client.exe ./cmd/pykeymouse-client
+2. Copy certs:
+   Copy server.crt (self) or ca.crt (CA mode) from the server to the client.
+3. Generate bcrypt hash:
+   go run ./cmd/pykeymouse-hash
+4. Configure:
+   Copy configs/client.json next to pykeymouse-client.exe and edit:
+   - server_addr = "SERVER_IP:8443"
+   - tls.ca_cert_path = "C:\\path\\to\\server.crt" (self) or "C:\\path\\to\\ca.crt"
+   - auth.password_hash_bcrypt = "<same bcrypt hash as server>"
+5. Run:
+   pykeymouse-client.exe -config configs\\client.json
