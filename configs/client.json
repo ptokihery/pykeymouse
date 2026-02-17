@@ -1,0 +1,21 @@
+﻿{
+  "server_addr": "127.0.0.1:8443",
+  "tls": {
+    "ca_cert_path": "",
+    "server_name": "",
+    "server_cert_pin_sha256": ""
+  },
+  "auth": {
+    "password_hash_bcrypt": "$2a$12$0123456789abcdef0123450123456789abcdef0123456789abcde"
+  },
+  "input": {
+    "enable_keyboard": true,
+    "enable_mouse": true
+  },
+  "heartbeat_interval_seconds": 3,
+  "mouse_aggregate_ms": 1,
+  "reconnect": {
+    "initial_delay_ms": 250,
+    "max_delay_ms": 5000
+  }
+}

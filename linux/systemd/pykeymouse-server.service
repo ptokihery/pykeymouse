@@ -1,0 +1,15 @@
+﻿[Unit]
+Description=PyKeyMouse Server
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/pykeymouse-server -config /etc/pykeymouse/server.json
+Restart=on-failure
+User=pykeymouse
+Group=pykeymouse
+SupplementaryGroups=input
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

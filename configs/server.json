@@ -1,0 +1,26 @@
+﻿{
+  "listen_addr": "0.0.0.0:8443",
+  "allowed_ip": "",
+  "tls": {
+    "cert_path": "server.crt",
+    "key_path": "server.key"
+  },
+  "auth": {
+    "password_hash_bcrypt": "$2a$12$0123456789abcdef0123450123456789abcdef0123456789abcde"
+  },
+  "session": {
+    "timeout_seconds": 600,
+    "inactivity_seconds": 600,
+    "skew_seconds": 5
+  },
+  "input": {
+    "enable_keyboard": true,
+    "enable_mouse": true
+  },
+  "security": {
+    "max_events_per_sec": 5000
+  },
+  "test": {
+    "enable_echo": false
+  }
+}
