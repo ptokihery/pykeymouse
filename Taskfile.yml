@@ -1,0 +1,57 @@
+version: "3"
+
+vars:
+  SERVER_BIN: /usr/local/bin/pykeymouse-server
+  SERVER_USER: pykeymouse
+  CONFIG_DIR: /etc/pykeymouse
+  CONFIG_FILE: /etc/pykeymouse/server.json
+  UDEV_RULE: linux/udev/99-pykeymouse-uinput.rules
+  SYSTEMD_UNIT: linux/systemd/pykeymouse-server.service
+  HOSTS: "192.168.1.10,pykeymouse"
+
+tasks:
+  build:
+    desc: Build the Linux server binary
+    cmds:
+      - go build -o {{.SERVER_BIN}} ./cmd/pykeymouse-server
+
+  user:
+    desc: Create the service user
+    cmds:
+      - sudo useradd --system --no-create-home --shell /usr/sbin/nologin {{.SERVER_USER}} || true
+
+  udev:
+    desc: Install udev rule for uinput
+    cmds:
+      - sudo cp {{.UDEV_RULE}} /etc/udev/rules.d/
+      - sudo udevadm control --reload-rules
+      - sudo udevadm trigger
+
+  certs:
+    desc: Generate TLS certs in /etc/pykeymouse
+    cmds:
+      - sudo mkdir -p {{.CONFIG_DIR}}
+      - sudo -E env "PATH=$PATH" go run ./cmd/pykeymouse-cert -mode self -out-dir {{.CONFIG_DIR}} -hosts "{{.HOSTS}}"
+
+  hash:
+    desc: Generate a bcrypt password hash
+    cmds:
+      - go run ./cmd/pykeymouse-hash
+
+  config:
+    desc: Copy server config template and remind to edit it
+    cmds:
+      - sudo mkdir -p {{.CONFIG_DIR}}
+      - sudo cp configs/server.json {{.CONFIG_FILE}}
+      - echo "Edit {{.CONFIG_FILE}} and set tls.cert_path, tls.key_path, and auth.password_hash_bcrypt"
+
+  systemd:
+    desc: Install and start the systemd service
+    cmds:
+      - sudo cp {{.SYSTEMD_UNIT}} /etc/systemd/system/
+      - sudo systemctl daemon-reload
+      - sudo systemctl enable --now pykeymouse-server
+
+  setup:
+    desc: Full server setup (build, user, udev, certs, config, systemd)
+    deps: [build, user, udev, certs, config, systemd]
