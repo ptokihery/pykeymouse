@@ -1,0 +1,26 @@
+# Go build artifacts
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# Go tooling
+/bin/
+/dist/
+
+# Certificates and keys
+/certs/
+*.key
+*.crt
+*.csr
+*.der
+*.pfx
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

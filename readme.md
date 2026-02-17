@@ -315,6 +315,16 @@ CONFIG
 - Generate a bcrypt hash with cmd/pykeymouse-hash and copy it to both configs.
 - Set TLS cert/key and optional CA or pin.
 
+CERTS
+
+Self-signed:
+go run ./cmd/pykeymouse-cert -mode self -out-dir certs -hosts "192.168.1.10,pykeymouse"
+
+CA-signed (creates ca.key/ca.crt and signs server cert):
+go run ./cmd/pykeymouse-cert -mode ca -out-dir certs -hosts "192.168.1.10,pykeymouse"
+
+The command prints the exact server/client config values (paths and optional pin).
+
 RUN
 
 - Linux: ensure uinput is available and apply linux/udev/99-pykeymouse-uinput.rules.
