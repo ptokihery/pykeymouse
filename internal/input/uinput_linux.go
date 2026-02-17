@@ -11,6 +11,14 @@ import (
 	"golang.org/x/sys/unix"
 )
 
+const (
+	uiSetEvbit   = 0x40045564
+	uiSetKeybit  = 0x40045565
+	uiSetRelbit  = 0x40045566
+	uiDevCreate  = 0x5501
+	uiDevDestroy = 0x5502
+)
+
 type UInputDevice struct {
 	file *os.File
 }
@@ -59,7 +67,7 @@ func openUInputDevice() (*os.File, error) {
 	paths := []string{"/dev/uinput", "/dev/input/uinput"}
 	var lastErr error
 	for _, p := range paths {
-		file, err := os.OpenFile(p, os.O_WRONLY|os.O_NONBLOCK, 0)
+		file, err := os.OpenFile(p, os.O_WRONLY|unix.O_NONBLOCK, 0)
 		if err == nil {
 			return file, nil
 		}
@@ -74,27 +82,27 @@ func openUInputDevice() (*os.File, error) {
 func (d *UInputDevice) configure(enableKeyboard, enableMouse bool, keyCodes []uint16) error {
 	fd := int(d.file.Fd())
 	if enableKeyboard || enableMouse {
-		if err := unix.IoctlSetInt(fd, unix.UI_SET_EVBIT, EV_KEY); err != nil {
+		if err := unix.IoctlSetInt(fd, uiSetEvbit, EV_KEY); err != nil {
 			return fmt.Errorf("UI_SET_EVBIT EV_KEY: %w", err)
 		}
 	}
 	if enableMouse {
-		if err := unix.IoctlSetInt(fd, unix.UI_SET_EVBIT, EV_REL); err != nil {
+		if err := unix.IoctlSetInt(fd, uiSetEvbit, EV_REL); err != nil {
 			return fmt.Errorf("UI_SET_EVBIT EV_REL: %w", err)
 		}
-		_ = unix.IoctlSetInt(fd, unix.UI_SET_RELBIT, REL_X)
-		_ = unix.IoctlSetInt(fd, unix.UI_SET_RELBIT, REL_Y)
-		_ = unix.IoctlSetInt(fd, unix.UI_SET_RELBIT, REL_WHEEL)
+		_ = unix.IoctlSetInt(fd, uiSetRelbit, REL_X)
+		_ = unix.IoctlSetInt(fd, uiSetRelbit, REL_Y)
+		_ = unix.IoctlSetInt(fd, uiSetRelbit, REL_WHEEL)
 	}
 	if enableKeyboard {
 		for _, code := range keyCodes {
-			_ = unix.IoctlSetInt(fd, unix.UI_SET_KEYBIT, int(code))
+			_ = unix.IoctlSetInt(fd, uiSetKeybit, int(code))
 		}
 	}
 	if enableMouse {
-		_ = unix.IoctlSetInt(fd, unix.UI_SET_KEYBIT, int(BTN_LEFT))
-		_ = unix.IoctlSetInt(fd, unix.UI_SET_KEYBIT, int(BTN_RIGHT))
-		_ = unix.IoctlSetInt(fd, unix.UI_SET_KEYBIT, int(BTN_MIDDLE))
+		_ = unix.IoctlSetInt(fd, uiSetKeybit, int(BTN_LEFT))
+		_ = unix.IoctlSetInt(fd, uiSetKeybit, int(BTN_RIGHT))
+		_ = unix.IoctlSetInt(fd, uiSetKeybit, int(BTN_MIDDLE))
 	}
 
 	var u uinputUserDev
@@ -106,7 +114,7 @@ func (d *UInputDevice) configure(enableKeyboard, enableMouse bool, keyCodes []ui
 	if err := binary.Write(d.file, binary.LittleEndian, &u); err != nil {
 		return fmt.Errorf("write uinput_user_dev: %w", err)
 	}
-	if err := unix.IoctlSetInt(fd, unix.UI_DEV_CREATE, 0); err != nil {
+	if err := unix.IoctlSetInt(fd, uiDevCreate, 0); err != nil {
 		return fmt.Errorf("UI_DEV_CREATE: %w", err)
 	}
 	return nil
@@ -137,6 +145,6 @@ func (d *UInputDevice) Close() error {
 		return nil
 	}
 	fd := int(d.file.Fd())
-	_ = unix.IoctlSetInt(fd, unix.UI_DEV_DESTROY, 0)
+	_ = unix.IoctlSetInt(fd, uiDevDestroy, 0)
 	return d.file.Close()
 }
